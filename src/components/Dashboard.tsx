@@ -1,40 +1,72 @@
 import React from 'react';
+import { useEffect, useState } from 'react';
 import { User, BookOpen, Clock, Trophy, Target, BarChart3 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateProgress } = useAuth();
+  const [userStats, setUserStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const stats = [
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      try {
+        const response = await apiService.getUserStats();
+        setUserStats(response.stats);
+      } catch (error) {
+        console.error('Error fetching user stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchUserStats();
+    }
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen py-12 bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando tu progreso...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = userStats ? [
     {
       icon: <BookOpen className="w-8 h-8" />,
-      title: "Lecciones Completadas",
-      value: "12/25",
-      percentage: 48,
-      color: "bg-blue-500"
+      title: "Lecciones HTML",
+      value: `${userStats.htmlProgress.completed}/${userStats.htmlProgress.total}`,
+      percentage: userStats.htmlProgress.percentage,
+      color: "bg-orange-500"
     },
     {
-      icon: <Clock className="w-8 h-8" />,
-      title: "Tiempo de Estudio",
-      value: "8.5 horas",
-      percentage: 85,
-      color: "bg-green-500"
+      icon: <BookOpen className="w-8 h-8" />,
+      title: "Lecciones CSS",
+      value: `${userStats.cssProgress.completed}/${userStats.cssProgress.total}`,
+      percentage: userStats.cssProgress.percentage,
+      color: "bg-blue-500"
     },
     {
       icon: <Trophy className="w-8 h-8" />,
       title: "Certificados",
-      value: "2",
-      percentage: 100,
+      value: userStats.certificatesEarned.toString(),
+      percentage: userStats.certificatesEarned > 0 ? 100 : 0,
       color: "bg-yellow-500"
     },
     {
       icon: <Target className="w-8 h-8" />,
       title: "Proyectos",
-      value: "3/5",
-      percentage: 60,
+      value: userStats.projectsCompleted.toString(),
+      percentage: Math.min((userStats.projectsCompleted / 5) * 100, 100),
       color: "bg-purple-500"
     }
-  ];
+  ] : [];
 
   const recentActivity = [
     {
@@ -98,10 +130,10 @@ const Dashboard: React.FC = () => {
               <p className="text-gray-600 text-lg">Continúa tu viaje de aprendizaje</p>
               <div className="flex items-center mt-2 space-x-4">
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                  Nivel Intermedio
+                  {userStats?.totalLessons > 20 ? 'Nivel Avanzado' : userStats?.totalLessons > 10 ? 'Nivel Intermedio' : 'Nivel Principiante'}
                 </span>
                 <span className="text-gray-500 text-sm">
-                  Miembro desde {new Date().toLocaleDateString()}
+                  Miembro desde {userStats?.memberSince ? new Date(userStats.memberSince).toLocaleDateString() : 'Hoy'}
                 </span>
               </div>
             </div>
@@ -200,48 +232,48 @@ const Dashboard: React.FC = () => {
                     strokeWidth="8"
                     fill="none"
                     strokeDasharray={`${48 * 2 * Math.PI}`}
-                    strokeDashoffset={`${48 * 2 * Math.PI * (1 - 0.48)}`}
+                    strokeDashoffset={`${48 * 2 * Math.PI * (1 - (userStats?.htmlProgress.percentage || 0) / 100)}`}
+                    className="text-orange-500"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xl font-bold text-gray-900">{userStats?.htmlProgress.percentage || 0}%</span>
+                </div>
+              </div>
+              <h3 className="font-semibold text-gray-900">HTML Básico</h3>
+              <p className="text-gray-600 text-sm">{userStats?.htmlProgress.completed || 0} de {userStats?.htmlProgress.total || 25} lecciones</p>
+            </div>
+
+            <div className="text-center">
+              <div className="relative w-24 h-24 mx-auto mb-4">
+                <svg className="w-24 h-24 transform -rotate-90">
+                  <circle
+                    cx="48"
+                    cy="48"
+                    r="40"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                    className="text-gray-200"
+                  />
+                  <circle
+                    cx="48"
+                    cy="48"
+                    r="40"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                    strokeDasharray={`${48 * 2 * Math.PI}`}
+                    strokeDashoffset={`${48 * 2 * Math.PI * (1 - (userStats?.cssProgress.percentage || 0) / 100)}`}
                     className="text-blue-500"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xl font-bold text-gray-900">48%</span>
-                </div>
-              </div>
-              <h3 className="font-semibold text-gray-900">HTML Básico</h3>
-              <p className="text-gray-600 text-sm">12 de 25 lecciones</p>
-            </div>
-
-            <div className="text-center">
-              <div className="relative w-24 h-24 mx-auto mb-4">
-                <svg className="w-24 h-24 transform -rotate-90">
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="40"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="none"
-                    className="text-gray-200"
-                  />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="40"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="none"
-                    strokeDasharray={`${48 * 2 * Math.PI}`}
-                    strokeDashoffset={`${48 * 2 * Math.PI * (1 - 0.30)}`}
-                    className="text-purple-500"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xl font-bold text-gray-900">30%</span>
+                  <span className="text-xl font-bold text-gray-900">{userStats?.cssProgress.percentage || 0}%</span>
                 </div>
               </div>
               <h3 className="font-semibold text-gray-900">CSS Avanzado</h3>
-              <p className="text-gray-600 text-sm">6 de 20 lecciones</p>
+              <p className="text-gray-600 text-sm">{userStats?.cssProgress.completed || 0} de {userStats?.cssProgress.total || 20} lecciones</p>
             </div>
 
             <div className="text-center">
@@ -264,16 +296,16 @@ const Dashboard: React.FC = () => {
                     strokeWidth="8"
                     fill="none"
                     strokeDasharray={`${48 * 2 * Math.PI}`}
-                    strokeDashoffset={`${48 * 2 * Math.PI * (1 - 0.10)}`}
+                    strokeDashoffset={`${48 * 2 * Math.PI * (1 - 0.05)}`}
                     className="text-green-500"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xl font-bold text-gray-900">10%</span>
+                  <span className="text-xl font-bold text-gray-900">5%</span>
                 </div>
               </div>
               <h3 className="font-semibold text-gray-900">JavaScript</h3>
-              <p className="text-gray-600 text-sm">2 de 30 lecciones</p>
+              <p className="text-gray-600 text-sm">Próximamente</p>
             </div>
           </div>
         </div>

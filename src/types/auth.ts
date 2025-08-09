@@ -23,4 +23,11 @@ export interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
+  isInitialized: boolean;
+  updateProgress: (progress: {
+    htmlLessons?: number;
+    cssLessons?: number;
+    completedProject?: { name: string };
+    certificate?: { name: string };
+  }) => Promise<void>;
 }

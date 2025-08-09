@@ -39,7 +39,7 @@ const Auth: React.FC<AuthProps> = ({ setActiveSection }) => {
       if (success) {
         setActiveSection('home');
       } else {
-        setError('El email ya está registrado');
+        setError('Error en el registro. El email podría estar ya registrado.');
       }
     }
   };
